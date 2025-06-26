@@ -54,7 +54,7 @@ def get_sync_arguments():
 	src_location, src_path = args.src.split(":") if ":" in args.src else (args.src, None)
 	dst_location, dst_path = args.dst.split(":") if ":" in args.dst else (args.dst, None)
 
-	if dst_path == None and encrypt_src:
+	if dst_path == None and args.encrypt:
 		print("Ignoring --encrypt option as you did not pick a destination.")
 		encrypt_src = False
 
@@ -74,7 +74,6 @@ def get_sync_arguments():
 		"encrypt_src" : args.encrypt,
 		"config_file" : config_file,
 		"remove_remote_files" : remove_remote_files}
-
 
 
 def check_pick_mode(config, args):
