@@ -2,7 +2,7 @@ locations:
   sample-source:
     name: sample-source
     root_dir: /home/user/personal_files
-    trusted: false
+    trusted: true
     dirs:
       - path: pictures/vacation_2025
         sensitive: false
@@ -19,7 +19,7 @@ locations:
   sample-destination:
     name: sample-remote-destination
     root_dir: /home/remote-user
-    trusted: true
+    trusted: false
     dirs:
       - path: pictures/vacation/2025
         sensitive: false
