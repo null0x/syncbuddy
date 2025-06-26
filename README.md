@@ -96,7 +96,7 @@ locations:
         exclude_folders:
           - "*/.git/"
       - path: documents/letters
-        sensitive: true
+        sensitive: false
         sensitive_folders:
           - family
 
