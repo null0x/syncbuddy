@@ -1,0 +1,36 @@
+locations:
+  sample-source:
+    name: sample-source
+    root_dir: /home/user/personal_files
+    trusted: false
+    dirs:
+      - path: pictures/vacation_2025
+        sensitive: false
+        exclude_folders:
+          - AllPictures.zip
+          - Videos/Large/Stuff
+      - path: documents/tax_2024
+        sensitive: true
+      - path: documents/letters
+        sensitive: false
+        sensitive_folders:
+          - family/my_wife
+
+  sample-destination:
+    name: sample-remote-destination
+    root_dir: /home/remote-user
+    trusted: true
+    dirs:
+      - path: pictures/vacation/2025
+        sensitive: false
+      - path: documents/tax/2024
+        sensitive: true
+      - path: documents/my_letters
+    ssh:
+      username: remote-user
+      hostname: remote-user.my-remote-storage.com
+      port: 23
+
+gpg:
+  recipient: my_email@address.com
+  tmp_dir: /tmp/syncmate
