@@ -37,20 +37,33 @@ def init():
 	if not check_system_dependencies():
 		return None, None
 
-	print_welcome_banner()
+	# Parse command-line arguments
+	args = get_sync_arguments()
+	if args is None:
+		return None, None
+	
+	print_welcome_banner(args)
 
 	# Parse configuration
-	config = parse_config()
+	config = parse_config(args["config_file"])
 	if config is None:
 		return None, None
-
-	# Parse command-line arguments
-	args = get_sync_arguments(config)
-	if args is None:
+	
+	# Some consistency checks
+	locations = config.get("locations", {})
+	
+	if not args["src_location"] in locations:
+		print(f"Source \"{args['src_location']}\" location not found in YAML configuration.")
+		print(f"Available locations: {', '.join(locations.keys())}")
+		return None, None
+		
+	if not args["dst_location"] in locations:
+		print(f"Destination \"{args['dst_location']}\" location not found in YAML configuration.")
+		print(f"Available locations: {', '.join(locations.keys())}")
 		return None, None
 
 	# Apply pick mode if selected
-	config = check_pick_mode(config)
+	config = check_pick_mode(config, args)
 
 	return config, args
 
@@ -153,8 +166,8 @@ def confirm_sync_jobs(args : dict, jobs : list):
 	return ask_yes_no("\nDo you want to continue? (y/n): ")
 
 
-def print_welcome_banner():
-    banner = r"""
+def print_welcome_banner(args):
+    banner = fr"""
   _____                    __  __       _       
  / ____|                  |  \/  |     | |      
 | (___  _   _ _ __   ___  | \  / | __ _| |_ ___ 
@@ -166,5 +179,7 @@ def print_welcome_banner():
                                         
 Author: Dominik Püllen
 Year:   2025
+
+Config: {args["config_file"]}
 """
     print(banner)

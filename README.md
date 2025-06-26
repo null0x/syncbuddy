@@ -18,10 +18,10 @@ Under the hood, SyncMate uses `rsync` for efficient file synchronization, `gpg` 
 The usage of SyncMate is easy and straightforward:
 
 ```python
-python3 main.py --src=<source-location> --dst=<destination-location> [--dry] [--remove]
+python3 main.py --src=<source-location> --dst=<destination-location> [--dry] [--remove] [--config]
 ```
 
-Before that the user must define both `source-location` and `destination-location` in the configuration file (see below). The optional `dry` parameter indicates a test run which is helpful if you are unsure of how `rsync` will move data. The `remove` argument is also passed to `rsync` indicating to delete those files at the destination location that do not longer exist at the source location. 
+Before running SyncMate, the user must define both `source-location` and `destination-location` in the configuration file (see below). The optional `dry` parameter indicates a test run which is helpful if you are unsure of how `rsync` will move data. The `remove` argument is also passed to `rsync` indicating to delete those files at the destination location that no longer exist at the source location. The `config` parameter enables the user to specify a configuration file with a custom name.
 
 
 
@@ -48,7 +48,7 @@ python3 main.py --src=<source-location>:this/is_a/path.syncmate --dst=<destinati
 
 ## Configuration
 
-SyncMate is configured via `config.yaml`. This file defines *locations* - each representing either a source or a destination in the synchronization process.
+SyncMate is configured via a `config.yaml`. This file defines *locations* - each representing either a source or a destination in the synchronization process. If necessary, the user can provide the path to a  file with a custom name using the command line argument `--config`.
 
 
 ### Trusted vs. Untrusted Locations

@@ -5,7 +5,7 @@ import os
 from src.log import logger
 from src.globals import Globals
 
-def parse_config():
+def parse_config(path_to_config):
 	"""
     Parses a YAML configuration file that defines locations to be synchronized
 
@@ -20,10 +20,10 @@ def parse_config():
     """
 	
 	try:
-		with open(Globals.CONFIG_FILE) as f:
+		with open(path_to_config) as f:
 			config = yaml.safe_load(f)
 	except FileNotFoundError:
-		logger.error(f"Configuration file \"{Globals.CONFIG_FILE}\" not found.")
+		logger.error(f"Configuration file \"{path_to_config}\" not found.")
 		return None
 		
 	# Print some debug information
@@ -31,44 +31,21 @@ def parse_config():
 	
 	return config
 
-def get_sync_arguments(config):
+def get_sync_arguments():
 	"""
-	Parses and validates command-line arguments for file synchronization.
-
-	Supports optional path specification using the syntax `location:path`.
-	This allows targeting a specific subdirectory or file within the source or destination.
-
-	Usage examples:
-		Standard location only:
-			python sync.py --src local --dst usb
-
-		With relative paths:
-			python sync.py --src local:some/file.txt --dst usb:backup/
-
-	Parameters:
-		config (dict): A parsed YAML configuration containing a "locations" key,
-					   mapping location names to their definitions.
+	Parses and validates command-line arguments for SyncMate.
 
 	Returns:
-		dict: A dictionary with the following keys:
-			- 'src_location' (str): The source location name.
-			- 'dst_location' (str): The destination location name.
-			- 'src_path' (str or None): Optional source subpath (if specified via colon syntax).
-			- 'dst_path' (str or None): Optional destination subpath (if specified via colon syntax).
-			- 'dry_run' (bool): Whether to simulate the synchronization (currently hardcoded to False).
-			- 'remove_remote_files' (bool): Whether to remove destination files not present in the source
-											(currently hardcoded to True).
-
-	Raises:
-		SystemExit: If arguments are missing, source and destination are identical,
-					or if either location is not found in the configuration.
+		dict: A dictionary of parsed and validated arguments,
+				or None if validation fails.
 	"""
 	parser = argparse.ArgumentParser(description="Synchronizes a source location with a destination location.")
+	parser.add_argument("--config", type=str, help="Path to the configuration YAML file")
 	parser.add_argument("--src", required=True, help="Source location (e.g., local")
 	parser.add_argument("--dst", required=True, help="Destination location (e.g., usb")
-	parser.add_argument("--encrypt", action="store_true", help="Encrypt source if you are in pick mode.")
 	parser.add_argument("--dry", action="store_const", const=True, default=None, help="Make a dry (test) run.")
 	parser.add_argument("--remove", action="store_const", const=True, default=True, help="Remove files from destination that do not exist on source.")
+	parser.add_argument("--encrypt", action="store_true", help="Encrypt source if you are in pick mode.")
 	args = parser.parse_args()
 
 	dry_run = args.dry
@@ -77,28 +54,16 @@ def get_sync_arguments(config):
 	src_location, src_path = args.src.split(":") if ":" in args.src else (args.src, None)
 	dst_location, dst_path = args.dst.split(":") if ":" in args.dst else (args.dst, None)
 
-	if src_location == dst_location:
-		print("Source and destination location must not be equal.")
-		return None
-
-	# Some consistency checks
-	locations = config.get("locations", {})
-	
-	if not src_location in locations:
-		print(f"Source \"{src_location}\" location not found in YAML configuration.")
-		print(f"Available locations: {', '.join(locations.keys())}")
-		return None
-		
-	if not dst_location in locations:
-		print(f"Destination \"{dst_location}\" location not found in YAML configuration.")
-		print(f"Available locations: {', '.join(locations.keys())}")
-		return None
-
-	encrypt_src = args.encrypt
-
 	if dst_path == None and encrypt_src:
 		print("Ignoring --encrypt option as you did not pick a destination.")
 		encrypt_src = False
+
+	if src_location == dst_location:
+		print("Source and destination location must not be equal.")
+		return None
+	
+	# Check if user provided a configuration file
+	config_file = args.config if args.config is not None else Globals.DEFAULT_CONFIG_FILE
 
 	return {
 		"src_location" : src_location,
@@ -106,7 +71,8 @@ def get_sync_arguments(config):
 		"src_path": src_path,
 		"dst_path": dst_path,
 		"dry_run" : dry_run, 
-		"encrypt_src" : encrypt_src,
+		"encrypt_src" : args.encrypt,
+		"config_file" : config_file,
 		"remove_remote_files" : remove_remote_files}
 
 
