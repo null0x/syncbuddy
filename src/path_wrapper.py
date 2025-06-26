@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
+import os
+import glob
 import subprocess
 import shlex
 
@@ -9,21 +11,27 @@ from src.utils import assemble_base_ssh_cmd
 
 class MyPath:
     def __init__(self, sys_root: str, pth_root: str = "", sub_pth: str = "", ssh_info: Optional[dict] = None):
-        self.sys_root: Path = Path(sys_root)
-        self.pth_root: Path = Path(pth_root)
-        self.sub_pth: Path = Path(sub_pth)
-        self.ssh_info = ssh_info  
+        # Store components
+        self.sys_root = sys_root
+        self.pth_root = pth_root
+        self.sub_pth = sub_pth
+
+        self.abs_path = Path(self.sys_root) / self.pth_root / self.sub_pth # strips wildcards
+        self.raw_path = os.path.join(self.sys_root, self.pth_root, self.sub_pth)
+
+        self.has_wildcards = glob.has_magic(self.raw_path)
+        self.ssh_info = ssh_info
 
     def is_dir(self) -> bool:
-        return self.get_abs_path().is_dir()
+        # TODO Extend for remote path
+        return self.abs_path.is_dir() if self.ssh_info is None else False
 
     def get_abs_path(self) -> Path:
-        return self.sys_root / self.pth_root / self.sub_pth
+        return self.abs_path
+          
         
     def has_suffix(self, suffix: str) -> bool:
-        """Check if the absolute path ends with the given suffix."""
-        path_suffix = self.get_abs_path().suffix
-        return path_suffix.lower() == suffix.lower()
+        return self.abs_path.suffix.lower() == suffix.lower()
 
     def __str__(self) -> str:
         """String representation using POSIX path."""
@@ -37,38 +45,41 @@ class MyPath:
         return None
 
     def exists(self) -> bool:
-        this_path = self.get_abs_path()
+
         if self.ssh_info is None:
-            return this_path.exists()
+            if self.has_wildcards:
+                logger.debug(f"Path {self.abs_path} has wildcards.")
+                return glob.glob(self.raw_path)
+            return self.abs_path.exists()
         else:
             check_cmd = assemble_base_ssh_cmd(self.ssh_info)
-            check_cmd += [f"stat {shlex.quote(str(this_path))}"]
+            check_cmd += [f"stat {shlex.quote(str(self.abs_path))}"]
             result = subprocess.run(check_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             return result.returncode == 0
         
     def create_dir(self):
-        this_path = self.get_abs_path()
 		
         # Create a local directory
         if self.ssh_info is None:	
             try:
-                this_path.get_abs_path().mdkir(parent=True, exist_ok=True)
+                self.abs_path.mdkir(parent=True, exist_ok=True)
                 return True
             except OSError as e:
-                print(f"Failed to create target destination {this_path}: {e}")
+                print(f"Failed to create local directory {self.abs_path}: {e}")
                 return False
             
         else:
             # Create a remote directory
             create_cmd = assemble_base_ssh_cmd(self.ssh_info)
-            create_cmd += [f"mkdir -p '{this_path}'"]
+            cmd += [f"mkdir -p {shlex.quote(str(self.abs_path))}"]
 
             result = subprocess.run(create_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)			
 
             if result.returncode == 0:
-                logger.debug(f"Successfully created remote directory '{this_path}'.")
+                logger.debug(f"Successfully created remote directory '{self.abs_path}'.")
                 return True
             else:
+                logger.debug(f"Failed to create remote directory: {result.stderr.strip()}")
                 return False
 
 
@@ -117,11 +128,18 @@ class DirectoryWrapper():
             logger.warning(f"Sensitive sub-folders are ignored because the entire directory is marked sensitive.")
         else:
             for subdir in sens_folders:
-                #path = self._build_and_validate_path(subdir, tag="Sensitive folder")
-                path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
-                if path:
-                    self.sensitive_folders.append(path)
-                    self.exclude_dirs.append(path)  # Assumes all sensitive dirs are also excluded
+                try:
+                    # Ignore empty directories
+                    if subdir == None:
+                        logger.warning("Ignoring empty sensitive directory.")
+                        continue
+
+                    path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
+                    if path:
+                        self.sensitive_folders.append(path)
+                        self.exclude_dirs.append(path)  # Assumes all sensitive dirs are also excluded
+                except FileNotFoundError as e:
+                    logger.warning(str(e))
 
     def process_exclude_paths(self, exclude_subdirs: list[str]):
         """
@@ -129,7 +147,11 @@ class DirectoryWrapper():
         """
         for subdir in exclude_subdirs:
             try:
-                #path = self._build_and_validate_path(subdir, tag="Exclude directory")
+                # Ignore empty directories
+                if subdir == None:
+                    logger.warning("Ignoring empty exclude directory.")
+                    continue
+                
                 path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
                 if path:
                     self.exclude_dirs.append(path)

@@ -91,12 +91,14 @@ locations:
         exclude_folders:
           - AllPictures.zip
           - Videos/Large/Stuff
-      - path: documents/tax_2024
-        sensitive: true
-      - path: documents/letters
+      - path: documents/thesis
         sensitive: false
+        exclude_folders:
+          - "*/.git/"
+      - path: documents/letters
+        sensitive: true
         sensitive_folders:
-          - family/my_wife
+          - family
 
   sample-destination:
     name: sample-remote-destination
@@ -105,7 +107,7 @@ locations:
     dirs:
       - path: pictures/vacation/2025
         sensitive: false
-      - path: documents/tax/2024
+      - path: documents/latex/thesis
         sensitive: true
       - path: documents/my_letters
     ssh:
