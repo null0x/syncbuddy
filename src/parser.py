@@ -43,7 +43,7 @@ def get_sync_arguments():
 	parser.add_argument("--config", type=str, help="Path to the configuration YAML file")
 	parser.add_argument("--src", required=True, help="Source location (e.g., local")
 	parser.add_argument("--dst", required=True, help="Destination location (e.g., usb")
-	parser.add_argument("--dry", action="store_const", const=True, default=None, help="Make a dry (test) run.")
+	parser.add_argument("--dry", action="store_true",  help="Make a dry (test) run.")
 	parser.add_argument("--remove", action="store_const", const=True, default=True, help="Remove files from destination that do not exist on source.")
 	parser.add_argument("--encrypt", action="store_true", help="Encrypt source if you are in pick mode.")
 	args = parser.parse_args()
