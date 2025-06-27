@@ -2,6 +2,8 @@ from src.log import logger
 from src.path_wrapper import DirectoryWrapper, MyPath
 from src.sync_job import SyncJob
 from src.security import check_security
+from src.utils import ask_yes_no
+from pathlib import Path
 
 def preprocess_location(location):
 	"""
@@ -80,7 +82,7 @@ def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
 		# Create an individual sync job for each sensitive folder (always encrypted)
 		dst_base_path = dst_dir.get_dir_path()
 		for sens_dir in src_dir.sensitive_folders:
-			dst_rel_parent = sens_dir.sub_pth.parent
+			dst_rel_parent = Path(sens_dir.sub_pth).parent
 
 			# Necessary to keep directory structure at the destination
 			dst_abs_path = MyPath(dst_base_path.sys_root, dst_base_path.pth_root, dst_rel_parent, ssh_info=dst_ssh)
@@ -129,3 +131,97 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 		rsync_command.extend(["-e", f"ssh -p {ssh_info['port']}"])
 
 	return rsync_command
+
+
+def select_sync_jobs(args : dict, jobs : list):
+	"""
+	Display planned synchronization jobs and key settings, then prompt the user for selection.
+
+	Parameters:
+		config (dict): Configuration flags like 'dry_run' and 'remove_remote_files'.
+		jobs (list): List of synchronization job objects, each must have a `describe()` method.
+
+	Returns:
+		list: List of selected jobs, or an empty list if the user cancels.
+	"""
+	if not jobs:
+		print("No synchronization jobs scheduled.")
+		return []
+	
+	print("\nThe following synchronization jobs are scheduled:\n")
+
+	for i, job in enumerate(jobs, 1):
+		print(f"  {i}. {job.describe()}")
+
+	print("\nSettings:")
+	print(f"  • Dry Run:                         {'Yes' if args['dry_run'] else 'No'}")
+	print(f"  • Remove files at destination:     {'Yes' if args['remove_remote_files'] else 'No'}")
+
+	print("")
+
+	selected_jobs = list()
+	canceled = False
+
+	while True:
+		selection = input("Select jobs to execute ([all], [X], [X:Y], [X,Y,Z], or [q] to quit): ").strip().lower()
+
+		if selection in {"q", "quit"}:
+			print("Selection canceled. No jobs selected.")
+			canceled = True
+			break 
+		
+		if selection == "all":
+			selected_jobs = [(i, job) for i, job in enumerate(jobs)]
+			break
+
+		# Single index
+		if selection.isdigit():
+			index = int(selection)
+			if 1 <= index <= len(jobs):
+				selected_jobs = [(index-1, jobs[index - 1])]
+				break
+			else:
+				print(f"Invalid number: must be between 1 and {len(jobs)}.")
+
+		# Range like 2:5
+		elif ":" in selection:
+			try:
+				start_str, end_str = selection.split(":")
+				start, end = int(start_str), int(end_str)
+				if 1 <= start < end <= len(jobs):
+					selected_jobs = [(i, jobs[i]) for i in range(start-1, end)]
+					break
+				else:
+					print(f"Invalid range: start must be < end and both within 1–{len(jobs)}.")
+			except ValueError:
+				print("Invalid range format. Use X:Y with numeric values.")
+
+		# Comma-separated list like 1,3,5
+		elif "," in selection:
+			try:
+				indices = [int(s.strip()) for s in selection.split(",")]
+				if all(1 <= i <= len(jobs) for i in indices):
+					# Use set to remove duplicates while preserving order
+					unique_indices = sorted(set(indices), key=indices.index)
+					selected_jobs = [(i, jobs[i - 1]) for i in unique_indices]
+					break
+				else:
+					print(f"One or more numbers out of valid range (1–{len(jobs)}).")
+			except ValueError:
+				print("Invalid list format. Use digits separated by commas, like 1,3,5.")
+
+		else:
+			print("Unrecognized input. Try again.")
+
+	if canceled:
+		return list()
+	
+	print("\n You selected the following synchronization jobs:\n")
+
+	for i, job in selected_jobs:
+		print(f"  {i+1}. {job.describe()}")
+
+	if not ask_yes_no("\nDo you want to continue? (y/n): "):
+		selected_jobs = list()
+	
+	return [job for _, job in selected_jobs]

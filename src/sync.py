@@ -1,11 +1,10 @@
 import subprocess
 
 from src.log import logger
-from src.utils import confirm_sync_jobs
 from src.security import encrypt_dir, decrypt_dir
 from src.globals import Globals
 
-from src.sync_helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd
+from src.sync_helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
 from src.sync_matching import match_locations, check_matching_locations
 
 
@@ -58,8 +57,7 @@ def sync_locations(config, args):
 		logger.debug(f"A total of {len(sync_jobs)} synchronization jobs were created.")
 
 	# Present synchronization jobs to the user and ask for confirmation
-	if not confirm_sync_jobs(args, sync_jobs):
-		return False
+	sync_jobs = select_sync_jobs(args, sync_jobs)
 	
 	if not execute_sync_jobs(config, args, sync_jobs):
 		return False
