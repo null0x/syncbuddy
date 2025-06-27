@@ -51,7 +51,7 @@ If the `--encrypt` flag is provided, SyncBuddy will encrypt the source directory
 If the source path ends with `.syncbuddy`, SyncBuddy assumes the data is already encrypted. If the destination location is marked as trusted in the configuration, SyncBuddy will automatically decrypt the data:
 
 ```python
-python3 main.py --src=<source-location>:this/is_a/path.syncbuddy --dst=<destination-location>:copy/data/here 
+python3 main.py --src=<source-location>:this/is_an/encrypted/directory.syncbuddy --dst=<destination-location>:copy/data/here 
 ```
 
 
