@@ -1,6 +1,6 @@
 import logging
 
-logger = logging.getLogger("SyncMate")
+logger = logging.getLogger("SyncBuddy")
 logger.setLevel(logging.INFO)
 
 if not logger.handlers:

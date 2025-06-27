@@ -20,14 +20,14 @@ def check_system_dependencies():
     for current_bin in Globals.REQUIRED_SYSTEM_BINS:
         path = shutil.which(current_bin)
         if path is None:
-            logger.error(f"SyncMate requires {current_bin}. Please install it on your system.")
+            logger.error(f"SyncBuddy requires {current_bin}. Please install it on your system.")
             return False
     return True
 
 
 def init():
 	"""
-	Initializes SyncMate by performing system checks, parsing configuration,
+	Initializes SyncBuddy by performing system checks, parsing configuration,
 	handling CLI arguments, and applying optional pick mode.
 
 	Returns:

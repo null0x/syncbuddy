@@ -17,7 +17,7 @@ from src.utils import init, clean_up
 
 def main():
 
-	# 1. Init SyncMate
+	# 1. Init SyncBuddy
 	config, args = init()
 
 	if config != None and args != None:

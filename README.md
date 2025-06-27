@@ -84,7 +84,7 @@ Each directory (`dirs`) entry supports the following fields:
 
 ### Remote Locations
 
-If the location is remote, an `ssh` block must be provided, specifying: `username` (SSH login user), `hostname` (Address of the remote machine), `port`: SSH port (defaul it 22).
+If the location is remote, an `ssh` block must be provided, specifying: `username` (SSH login user), `hostname` (Address of the remote machine), `port`: SSH port (default it 22).
 
 ### Example Configuration
 

@@ -33,7 +33,7 @@ def parse_config(path_to_config):
 
 def get_sync_arguments():
 	"""
-	Parses and validates command-line arguments for SyncMate.
+	Parses and validates command-line arguments for SyncBuddy.
 
 	Returns:
 		dict: A dictionary of parsed and validated arguments,

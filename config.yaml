@@ -33,4 +33,4 @@ locations:
 
 gpg:
   recipient: my_email@address.com
-  tmp_dir: /tmp/syncmate
+  tmp_dir: /tmp/syncbuddy
