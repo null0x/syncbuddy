@@ -45,7 +45,8 @@ def get_sync_arguments():
 	parser.add_argument("--dst", required=True, help="Destination location (e.g., usb")
 	parser.add_argument("--dry", action="store_true",  help="Make a dry (test) run.")
 	parser.add_argument("--remove", action="store_const", const=True, default=True, help="Remove files from destination that do not exist on source.")
-	parser.add_argument("--encrypt", action="store_true", help="Encrypt source if you are in pick mode.")
+	parser.add_argument("--encrypt", action="store_true", default=False, help="Encrypt source if you are in pick mode.")
+	parser.add_argument("--match", action="store_true", help="Manually pair source and destination directories.")
 	args = parser.parse_args()
 
 	dry_run = args.dry
@@ -71,6 +72,7 @@ def get_sync_arguments():
 		"src_path": src_path,
 		"dst_path": dst_path,
 		"dry_run" : dry_run, 
+		"manual_matching" : args.match,
 		"encrypt_src" : args.encrypt,
 		"config_file" : config_file,
 		"remove_remote_files" : remove_remote_files}

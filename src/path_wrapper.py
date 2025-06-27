@@ -84,6 +84,7 @@ class MyPath:
 
 
 class DirectoryWrapper():
+    """Represents a path inside a location"""
 
     def __init__(self, sys_root: str, pth_dir: str, ssh_info: dict = None, sensitive : bool = False):
         """
@@ -104,6 +105,10 @@ class DirectoryWrapper():
         self.is_sensitive: bool = sensitive
 
     
+    @staticmethod
+    def are_syncable(src : "DirectoryWrapper", dst : "DirectoryWrapper") -> bool:
+        return src.is_sensitive == dst.is_sensitive
+
     def get_dir_path(self) -> MyPath:
         return self.root_path
     
@@ -125,7 +130,7 @@ class DirectoryWrapper():
         Register sensitive folders and validate their existence.
         """
         if self.is_sensitive:
-            logger.warning(f"Sensitive sub-folders are ignored because the entire directory is marked sensitive.")
+            logger.debug(f"Sensitive sub-folders are ignored because the entire directory is marked sensitive.")
         else:
             for subdir in sens_folders:
                 try:

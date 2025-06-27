@@ -23,8 +23,7 @@ def main():
 	if config != None and args != None:
 
 		# 2. Synchronize locations
-		if sync_locations(config, args):
-			print("\nSynchronization was successful.")
+		sync_locations(config, args)
 
 		# 3. Clean up
 		clean_up(config)
