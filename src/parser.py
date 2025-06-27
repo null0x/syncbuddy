@@ -57,7 +57,6 @@ def get_sync_arguments():
 
 	if dst_path == None and args.encrypt:
 		print("Ignoring --encrypt option as you did not pick a destination.")
-		encrypt_src = False
 
 	if src_location == dst_location:
 		print("Source and destination location must not be equal.")
