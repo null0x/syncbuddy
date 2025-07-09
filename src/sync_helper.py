@@ -3,6 +3,7 @@ from src.path_wrapper import DirectoryWrapper, MyPath
 from src.sync_job import SyncJob
 from src.security import check_security
 from src.utils import ask_yes_no
+from src.globals import Globals
 from pathlib import Path
 
 def preprocess_location(location):
@@ -151,6 +152,8 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	# Add deletion of remote files
 	if args.get("remove_remote_files", False):
 		rsync_command.append("--delete")
+		rsync_command.extend(["--exclude", "*"+Globals.CIPHERTEXT_ENDING]) # Prevent deletion of ciphertexts
+
 
 	# Use SSH if port is specified
 	ssh_info = sync_job.ssh
