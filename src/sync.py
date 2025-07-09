@@ -36,12 +36,12 @@ def sync_locations(config, args):
 
 	logger.debug("Directories successfully processed.")
 
-	# Match locations
+	# Check if the user wants to manually match source to destination directories.
 	if args["manual_matching"]:
 		if not match_locations(src, dst):
 			return False
 		
-	# Check if each source location has a matching destination location
+	# If not perform automatic matching (first source to first destination etc.)
 	elif not check_matching_locations(src["processed_dirs"], dst["processed_dirs"]):
 		return False
 		
@@ -121,7 +121,7 @@ def execute_sync_jobs(config, args, sync_jobs):
 		gpg_files = list(dst_path.rglob(f"*{Globals.CIPHERTEXT_ENDING}"))
 
 		for ciphertext in gpg_files:
-			if not decrypt_dir(ciphertext, job.decrypt):
+			if not decrypt_dir(ciphertext, not config["pickmode"]):
 				num_errors+=1
 		
 	return num_errors == 0

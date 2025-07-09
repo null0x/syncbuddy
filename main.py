@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-backup.py
+main.py
 
 Synchronizes a source location with a destination location, supporting encryption and decryption
 of sensitive data. Utilizes tar, gpg, and rsync for archiving, encrypting, and synchronization.

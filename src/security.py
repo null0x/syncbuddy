@@ -21,6 +21,7 @@ def check_security(src : DirectoryWrapper, dst_trusted : bool) -> tuple[bool, bo
     ## Encrypt source if unencrypted sensitive data is moved to an untrusted location.
     encrypt = src.is_sensitive and not dst_trusted and not src_path.has_suffix(Globals.CIPHERTEXT_ENDING)
 
+
     ## Decrypt if sensitive data is moved to a trusted location
     decrypt = src.is_sensitive and dst_trusted 
 

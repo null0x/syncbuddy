@@ -143,39 +143,17 @@ def clean_up(config):
 		except Exception as e:
 			logger.warning(f"Failed to remove temporary directory {tmp_dir}: {e}")
 			
-def confirm_sync_jobs(args : dict, jobs : list):
-	"""
-	Display planned synchronization jobs and key settings, then prompt the user for confirmation.
-
-	Parameters:
-		args (dict): Contains configuration flags like 'dry_run' and 'remove_remote_files'.
-		jobs (list): List of synchronization job objects, each expected to implement a `describe()` method.
-
-	Returns:
-		bool: True if the user confirms, False otherwise.
-	"""
-	print("\nThe following synchronization jobs are scheduled:\n")
-
-	for i, job in enumerate(jobs, 1):
-		print(f"  {i}. {job.describe()}")
-
-	print("\nSettings:")
-	print(f"  • Dry Run:                         {'Yes' if args['dry_run'] else 'No'}")
-	print(f"  • Remove files at destination:     {'Yes' if args['remove_remote_files'] else 'No'}")
-
-	return ask_yes_no("\nDo you want to continue? (y/n): ")
-
 
 def print_welcome_banner(args):
     banner = fr"""
-  _____                    ____            _     _       
+  _____                   ____            _     _       
  / ____|                 |  _ \          | |   | |      
 | (___  _   _ _ __   ___ | |_) |_   _  __| | __| |_   _ 
  \___ \| | | | '_ \ / __||  _ <| | | |/ _` |/ _` | | | |
  ____) | |_| | | | | (__ | |_) | |_| | (_| | (_| | |_| |
 |_____/ \__, |_| |_|\___||____/ \__,_|\__,_|\__,_|\__, |
-         __/ |                                      __/ |
-        |___/                                      |___/ 
+         __/ |                                     __/ |
+        |___/                                     |___/ 
                            
 Author: Dominik Püllen
 Year:   2025

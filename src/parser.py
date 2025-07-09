@@ -110,9 +110,12 @@ def check_pick_mode(config, args):
 	dst_path = args.get("dst_path")
 	new_src_dirs = None
 
+	config["pickmode"] = False
+
 	# True if user provided a specific path for the source location
 	if src_path is not None:
 		logger.debug("Pick mode enabled for source.")
+		config["pickmode"] = True
 		decryption = src_path.endswith(Globals.CIPHERTEXT_ENDING)
 		new_src_dirs = [{"path": src_path}]
 		_, dst_ext = os.path.splitext(dst_path or "")
@@ -131,6 +134,7 @@ def check_pick_mode(config, args):
 	# True if user provided a specific path for the destination location
 	if dst_path is not None:
 		logger.debug("Pick mode enabled for destination.")
+		config["pickmode"] = True
 		dst_dir = {"path": dst_path}
 
 		# Check if data should be encrypted (provided by user as input argument)

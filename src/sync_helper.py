@@ -28,6 +28,7 @@ def preprocess_location(location):
 	# Parse directories
 	for loc_to_sync in location.get("dirs", []):
 		sensitive = loc_to_sync.get("sensitive", False)
+
 		loc = DirectoryWrapper(root_dir, loc_to_sync["path"], ssh_info, sensitive)
 
 		# Check if source directory exist
@@ -58,6 +59,22 @@ def preprocess_location(location):
 
 
 def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
+	"""
+	Constructs a list of synchronization jobs between processed source and destination directories.
+
+	Each sync job contains information such as source and destination paths, encryption/decryption
+	flags, SSH configuration, and exclude lists. If the destination is marked as untrusted and any
+	source directory contains sensitive subdirectories, those are excluded from the primary job and
+	handled separately via dedicated encrypted jobs.
+
+	Args:
+		src_location (dict): Dictionary containing processed source directory objects, keyed by "processed_dirs".
+		dst_location (dict): Dictionary containing processed destination directory objects, keyed by "processed_dirs",
+								and a boolean "trusted" flag indicating if the destination is secure.
+
+	Returns:
+		list[dict]: A list of SyncJob dictionaries, each representing a synchronization task.
+	"""
 	sync_jobs = []
 	dst_trusted = dst_location.get("trusted", False)
 
@@ -65,36 +82,46 @@ def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
 		dst_ssh = dst_dir.ssh_info
 		src_ssh = src_dir.ssh_info
 
-		# Check if exclude directory exists
-		src_dir.check_exclude_dirs()
+		# Check if exclude directories exist --> if not, print warning
+		src_dir.exclude_dir_exist()
 
-		# Main sync job
+		# Check if sensitive directories must be processed
+		sens_dirs_exist = (not dst_trusted) and (len(src_dir.sensitive_folders) > 0)
+
+		# Print debug information
+		if dst_trusted and len(src_dir.sensitive_folders) > 0:
+			logger.debug("Sensitive directories ignored because the destination location is trusted.")
+
+		# Check if current job requires encryption or decryption
 		encrypt, decrypt = check_security(src_dir, dst_trusted)
+
+		# Create new job
 		sync_jobs.append(SyncJob(
 			src=src_dir.get_dir_path(),
 			dst=dst_dir.get_dir_path(),
 			encrypt=encrypt,
 			decrypt=decrypt,
-			excludes=src_dir.get_exclude_dirs(),
+			excludes=src_dir.get_exclude_dirs(sens_dirs_exist),
 			ssh=dst_ssh or src_ssh
 		))
 
 		# Create an individual sync job for each sensitive folder (always encrypted)
-		dst_base_path = dst_dir.get_dir_path()
-		for sens_dir in src_dir.sensitive_folders:
-			dst_rel_parent = Path(sens_dir.sub_pth).parent
+		if sens_dirs_exist:
+			dst_base_path = dst_dir.get_dir_path()
+			for sens_dir in src_dir.sensitive_folders:
+				dst_rel_parent = Path(sens_dir.sub_pth).parent
 
-			# Necessary to keep directory structure at the destination
-			dst_abs_path = MyPath(dst_base_path.sys_root, dst_base_path.pth_root, dst_rel_parent, ssh_info=dst_ssh)
+				# Necessary to keep directory structure at the destination
+				dst_abs_path = MyPath(dst_base_path.sys_root, dst_base_path.pth_root, dst_rel_parent, ssh_info=dst_ssh)
 
-			sync_jobs.append(SyncJob(
-				src=sens_dir,
-				dst=dst_abs_path,
-				encrypt=True,
-				decrypt=False,
-				excludes=[],
-				ssh=dst_ssh
-			))
+				sync_jobs.append(SyncJob(
+					src=sens_dir,
+					dst=dst_abs_path,
+					encrypt=True,
+					decrypt=False,
+					excludes=[],
+					ssh=dst_ssh
+				))
 
 	logger.debug("Created %d synchronization job(s).", len(sync_jobs))
 	return sync_jobs
@@ -133,7 +160,7 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	return rsync_command
 
 
-def select_sync_jobs(args : dict, jobs : list):
+def select_sync_jobs(config: dict, jobs: list) -> list:
 	"""
 	Display planned synchronization jobs and key settings, then prompt the user for selection.
 
@@ -148,80 +175,75 @@ def select_sync_jobs(args : dict, jobs : list):
 		print("No synchronization jobs scheduled.")
 		return []
 	
-	print("\nThe following synchronization jobs are scheduled:\n")
+	if len(jobs) > 1:
+		
 
-	for i, job in enumerate(jobs, 1):
-		print(f"  {i}. {job.describe()}")
+		print("\nThe following synchronization jobs are scheduled:\n")
+		for i, job in enumerate(jobs, 1):
+			print(f"  {i}. {job.describe()}")
+
+		while True:
+			selection = input("\nSelect jobs to execute ([all], [X], [X:Y], [X,Y,Z], or [q] to quit): ").strip().lower()
+
+			if selection in {"q", "quit"}:
+				print("Selection canceled. No jobs selected.")
+				return []
+
+			# Select all jobs
+			if selection == "all":
+				selected = list(enumerate(jobs))
+				break
+
+			# Single index
+			if selection.isdigit():
+				index = int(selection)
+				if 1 <= index <= len(jobs):
+					selected = [(index - 1, jobs[index - 1])]
+					break
+				else:
+					print(f"Invalid number: must be between 1 and {len(jobs)}.")
+
+			# Range X:Y
+			elif ":" in selection:
+				try:
+					start, end = map(int, selection.split(":"))
+					if 1 <= start < end <= len(jobs):
+						selected = [(i, jobs[i]) for i in range(start - 1, end)]
+						break
+					else:
+						print(f"Invalid range: start must be < end and both in 1–{len(jobs)}.")
+				except ValueError:
+					print("Invalid format. Use X:Y with numeric values.")
+
+			# Comma-separated list X,Y,Z
+			elif "," in selection:
+				try:
+					indices = [int(x.strip()) for x in selection.split(",")]
+					if all(1 <= i <= len(jobs) for i in indices):
+						seen = set()
+						unique = [i for i in indices if not (i in seen or seen.add(i))]
+						selected = [(i - 1, jobs[i - 1]) for i in unique]
+						break
+					else:
+						print(f"Invalid input: numbers must be in 1–{len(jobs)}.")
+				except ValueError:
+					print("Invalid format. Use digits separated by commas, like 1,3,5.")
+
+			else:
+				print("Unrecognized input. Try again.")
+	else:
+		selected = list(enumerate(jobs))
+
+	# Show selected jobs
+	print("Please confirm the following synchronization jobs:\n")
+	for i, job in selected:
+		print(f"  {i + 1}. {job.describe()}")
 
 	print("\nSettings:")
-	print(f"  • Dry Run:                         {'Yes' if args['dry_run'] else 'No'}")
-	print(f"  • Remove files at destination:     {'Yes' if args['remove_remote_files'] else 'No'}")
-
-	print("")
-
-	selected_jobs = list()
-	canceled = False
-
-	while True:
-		selection = input("Select jobs to execute ([all], [X], [X:Y], [X,Y,Z], or [q] to quit): ").strip().lower()
-
-		if selection in {"q", "quit"}:
-			print("Selection canceled. No jobs selected.")
-			canceled = True
-			break 
-		
-		if selection == "all":
-			selected_jobs = [(i, job) for i, job in enumerate(jobs)]
-			break
-
-		# Single index
-		if selection.isdigit():
-			index = int(selection)
-			if 1 <= index <= len(jobs):
-				selected_jobs = [(index-1, jobs[index - 1])]
-				break
-			else:
-				print(f"Invalid number: must be between 1 and {len(jobs)}.")
-
-		# Range like 2:5
-		elif ":" in selection:
-			try:
-				start_str, end_str = selection.split(":")
-				start, end = int(start_str), int(end_str)
-				if 1 <= start < end <= len(jobs):
-					selected_jobs = [(i, jobs[i]) for i in range(start-1, end)]
-					break
-				else:
-					print(f"Invalid range: start must be < end and both within 1–{len(jobs)}.")
-			except ValueError:
-				print("Invalid range format. Use X:Y with numeric values.")
-
-		# Comma-separated list like 1,3,5
-		elif "," in selection:
-			try:
-				indices = [int(s.strip()) for s in selection.split(",")]
-				if all(1 <= i <= len(jobs) for i in indices):
-					# Use set to remove duplicates while preserving order
-					unique_indices = sorted(set(indices), key=indices.index)
-					selected_jobs = [(i, jobs[i - 1]) for i in unique_indices]
-					break
-				else:
-					print(f"One or more numbers out of valid range (1–{len(jobs)}).")
-			except ValueError:
-				print("Invalid list format. Use digits separated by commas, like 1,3,5.")
-
-		else:
-			print("Unrecognized input. Try again.")
-
-	if canceled:
-		return list()
-	
-	print("\n You selected the following synchronization jobs:\n")
-
-	for i, job in selected_jobs:
-		print(f"  {i+1}. {job.describe()}")
+	print(f"  • Dry Run:                         {'Yes' if config.get('dry_run') else 'No'}")
+	print(f"  • Remove files at destination:     {'Yes' if config.get('remove_remote_files') else 'No'}")
 
 	if not ask_yes_no("\nDo you want to continue? (y/n): "):
-		selected_jobs = list()
-	
-	return [job for _, job in selected_jobs]
+		return []
+
+	return [job for _, job in selected]

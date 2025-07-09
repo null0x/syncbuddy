@@ -101,7 +101,7 @@ class DirectoryWrapper():
         self.ssh_info: dict = ssh_info
         self.root_path: MyPath = MyPath(sys_root, cleaned_pth_root, "", ssh_info)
         self.sensitive_folders: list[MyPath] = []
-        self.exclude_dirs: list[MyPath] = []
+        self.exclude_folders: list[MyPath] = []
         self.is_sensitive: bool = sensitive
 
     
@@ -125,53 +125,57 @@ class DirectoryWrapper():
     def is_remote(self):
         return self.ssh_info != None  
 
+    def _process_paths(self, subdirs: list[str], target_list: list, list_type: str):
+        """
+        Shared helper to process subdirectory lists (sensitive or exclude).
+        """
+        for subdir in subdirs:
+            if subdir is None:
+                logger.warning(f"Ignoring empty {list_type} directory.")
+                continue
+
+            try:
+                path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
+                if path:
+                    target_list.append(path)
+            except FileNotFoundError as e:
+                logger.warning(str(e))
+
+
     def process_sensitive_folders(self, sens_folders: list[str]):
         """
         Register sensitive folders and validate their existence.
         """
         if self.is_sensitive:
-            logger.debug(f"Sensitive sub-folders are ignored because the entire directory is marked sensitive.")
+            logger.debug("Sensitive sub-folders are ignored because the entire directory is marked sensitive.")
         else:
-            for subdir in sens_folders:
-                try:
-                    # Ignore empty directories
-                    if subdir == None:
-                        logger.warning("Ignoring empty sensitive directory.")
-                        continue
+            self._process_paths(sens_folders, self.sensitive_folders, list_type="sensitive")
 
-                    path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
-                    if path:
-                        self.sensitive_folders.append(path)
-                        self.exclude_dirs.append(path)  # Assumes all sensitive dirs are also excluded
-                except FileNotFoundError as e:
-                    logger.warning(str(e))
 
     def process_exclude_paths(self, exclude_subdirs: list[str]):
         """
-        Register exclude folders and validate their existence, or ask user to ignore.
+        Register exclude folders and validate their existence.
         """
-        for subdir in exclude_subdirs:
-            try:
-                # Ignore empty directories
-                if subdir == None:
-                    logger.warning("Ignoring empty exclude directory.")
-                    continue
-                
-                path = MyPath(self.root_path.sys_root, self.root_path.pth_root, subdir, self.ssh_info)
-                if path:
-                    self.exclude_dirs.append(path)
-            except FileNotFoundError as e:
-                logger.warning(str(e))
+        self._process_paths(exclude_subdirs, self.exclude_folders, list_type="exclude")
 
-    def check_exclude_dirs(self):
-        for exclude_dir in self.exclude_dirs:
+
+    def exclude_dir_exist(self):
+        """
+        Checks if the exclude directories exists. If not, a warning is printed.
+        """
+        for exclude_dir in self.exclude_folders:
             if not exclude_dir.exists():
                 logger.warning(f"Exclude directory {exclude_dir} does not exist.")
 
 
-    def get_exclude_dirs(self):
-        '''
-        Returns list of exclude paths that are relative to self.pth_root (required by rsync)
-        '''
+    def get_exclude_dirs(self, merge_with_sensitive_dirs: bool) -> list[str]:
+        """
+        Returns a list of exclude paths relative to self.pth_root (required by rsync).
 
-        return [ex_pth.sub_pth for ex_pth in self.exclude_dirs]
+        If `merge_with_sensitive_dirs` is True, sensitive directories are also included in the list,
+        as they need to be excluded from unencrypted rsync runs and handled separately.
+
+        If False, only the explicitly excluded directories are returned.
+        """
+        sources = self.exclude_folders + self.sensitive_folders if merge_with_sensitive_dirs else self.exclude_folders
+        return [path.sub_pth for path in sources]

@@ -37,7 +37,7 @@ class SyncJob:
     def describe(self) -> str:
         if self.encrypt:
          return f"{self.src} ---(encrypt)--> {self.dst}"
-        #elif self.decrypt:
-        #    return f"{self.src} ---(decrypt)--> {self.dst}"
+        elif self.decrypt:
+            return f"{self.src} ---(decrypt)--> {self.dst}"
         else: 
             return f"{self.src}  -->  {self.dst}"  
