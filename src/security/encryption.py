@@ -57,11 +57,7 @@ def _encrypt_as_archive(config, input_dir, excludes, output_dir):
     logger.debug("Encryption in 'directory' mode")
 
     archive_path = output_dir.with_suffix(Globals.ARCHIVE_ENDING)
-    ciphertext_path = output_dir.with_suffix(Globals.CIPHERTEXT_ENDING)
-
-    print(ciphertext_path)
-    import sys
-    sys.exit()
+    ciphertext_path = output_dir.with_suffix(Globals.ARCHIVE_ENDING + Globals.CIPHERTEXT_ENDING)
 
     # Build tar command
     tar_cmd = [

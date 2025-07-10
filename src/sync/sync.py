@@ -127,7 +127,7 @@ def execute_sync_jobs(config, args, sync_jobs):
 		gpg_files = list(dst_path.rglob(f"*{Globals.CIPHERTEXT_ENDING}"))
 
 		for ciphertext in gpg_files:
-			if not decrypt_dir(ciphertext, not config["pickmode"]):
+			if not decrypt_dir(ciphertext, config["pickmode"]):
 				num_errors+=1
 		
 	return num_errors == 0
