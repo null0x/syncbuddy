@@ -12,5 +12,5 @@ def test_minimal_required_arguments():
     assert args.get("dst_path") == None
     assert args.get("config_file") == "test_config"
     assert args.get("dry_run") == False
-    assert args.get("remove_remote_files") == True
+    assert args.get("remove_remote_files") == False
     

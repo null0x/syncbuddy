@@ -91,6 +91,12 @@ def execute_sync_jobs(config, args, sync_jobs):
 		rsync_cmd = assemble_rsync_cmd(args, job)
 		src_path_str = job.src.get_abs_path()
 
+		# Create destination path if necessary (rsync only creates the parent)
+		if not job.dst.create_dir():
+			logger.error(f"Failed to create destination directory \"{str(job.dst)}\"")
+			continue
+			
+
 		# Encrypt source if required
 		if job.encrypt:		
 			src_path_str = encrypt_srcdir(config, job)	
@@ -108,11 +114,25 @@ def execute_sync_jobs(config, args, sync_jobs):
 
 		raw_src_path = str(job.src) if not job.encrypt else str(src_path_str)
 		
-		if (not job.encrypt) or (job.encryption_mode != EncryptionMode.FILE and not src_path_str.suffix):
+		#if (not job.encrypt) or (job.encryption_mode != EncryptionMode.FILE and not src_path_str.suffix):
+		#	raw_src_path += "/"
+
+		strip_outer_dir = config["pickmode"]
+
+		if not job.encrypt:
 			raw_src_path += "/"
-	
+
+		# Fall: Das ganze Verzeichnis is sensitive
+		if job.encrypt and job.encryption_mode == EncryptionMode.FILE:
+			raw_src_path += "/"
+
+		# Fall: Das ganze Verzeichnis ist sensitive und daher verschlüsselt
+		if job.decrypt:
+			raw_src_path += "/"
+			strip_outer_dir = True
 
 		rsync_cmd += [raw_src_path, raw_dst_path]
+		print(rsync_cmd)
 		logger.debug(rsync_cmd)
 		
 		try:
@@ -127,7 +147,7 @@ def execute_sync_jobs(config, args, sync_jobs):
 		gpg_files = list(dst_path.rglob(f"*{Globals.CIPHERTEXT_ENDING}"))
 
 		for ciphertext in gpg_files:
-			if not decrypt_dir(ciphertext, config["pickmode"]):
+			if not decrypt_dir(ciphertext, strip_outer_dir):
 				num_errors+=1
 		
 	return num_errors == 0

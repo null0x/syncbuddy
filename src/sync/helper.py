@@ -118,7 +118,19 @@ def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
 		if sens_dirs_exist:
 			dst_base_path = dst_dir.get_dir_path()
 			for sens_dir in src_dir.sensitive_folders:
-				dst_rel_parent = Path(sens_dir.sub_pth).parent
+
+				# The destination path depends on the encryption mode (file vs. directory)
+				if src_dir.encryption_mode == EncryptionMode.FILE:
+					# In file mode: each file is encrypted individually,
+					# so the ciphertexts are stored in the same directory as the original file.
+					dst_rel_parent = Path(sens_dir.sub_pth)
+				elif src_dir.encryption_mode == EncryptionMode.DIRECTORY:
+					# In directory mode: the entire directory is encrypted into a single archive.
+					# The resulting ciphertext is stored in the parent directory of the original folder.
+					dst_rel_parent = Path(sens_dir.sub_pth).parent
+				else:
+					raise ValueError(f"Unsupported encryption mode: {src_dir.encryption_mode}")
+
 
 				# Necessary to keep directory structure at the destination
 				dst_abs_path = MyPath(dst_base_path.sys_root, dst_base_path.pth_root, dst_rel_parent, ssh_info=dst_ssh)

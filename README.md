@@ -78,13 +78,21 @@ Each directory (`dirs`) entry supports the following fields:
 - `path`: The relative path to be synchronized
 - `sensitive`: Marks the entire directory sensitive
 - `exclude_folders` (*optional*): Subdirectories or files to exclude from synchronization
-- `sensitive_folders`(*optional): Subdirectories within a non-sensitive directory that should still be encrypted
+- `sensitive_folders`(*optional*): Subdirectories within a non-sensitive directory that should still be encrypted
+- `encryption_mode`(*optional*): Determines whether to encrypt the entire directory or each file individually. 
 
 **Note**: If a directory is marked as `sensitive: true`, the `sensitive_folders`setting is ignored - everything inside will be treated as sensitive. SyncBuddy does not allow synchronization of directories with mixed sensitivity, as this may lead to security leaks.
 
 ### Remote Locations
 
 If the location is remote, an `ssh` block must be provided, specifying: `username` (SSH login user), `hostname` (Address of the remote machine), `port`: SSH port (default it 22).
+
+### Encryption Mode
+
+SyncBuddy supports two encryption modes, configurable via the encryption_mode field:
+
+  1. *directory:* Encrypts the entire directory as a single archive. This hides both the directory structure and all filenames. However, accessing a single file requires decrypting the entire archiv
+  2. *file:* Encrypts each file individually. This allows selective updates and retrieval of specific files. However, the directory structure and filenames remain visible. This is the **default mode**.
 
 ### Example Configuration
 
@@ -106,6 +114,7 @@ locations:
           - "*/.git/"
       - path: documents/letters
         sensitive: false
+        encryption_mode: directory # vs. file
         sensitive_folders:
           - family
 

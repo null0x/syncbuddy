@@ -63,7 +63,7 @@ class MyPath:
         # Create a local directory
         if self.ssh_info is None:	
             try:
-                self.abs_path.mdkir(parent=True, exist_ok=True)
+                self.abs_path.mkdir(parents=True, exist_ok=True)
                 return True
             except OSError as e:
                 print(f"Failed to create local directory {self.abs_path}: {e}")
@@ -72,7 +72,7 @@ class MyPath:
         else:
             # Create a remote directory
             create_cmd = assemble_base_ssh_cmd(self.ssh_info)
-            cmd += [f"mkdir -p {shlex.quote(str(self.abs_path))}"]
+            create_cmd += [f"mkdir -p {shlex.quote(str(self.abs_path))}"]
 
             result = subprocess.run(create_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)			
 
