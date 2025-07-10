@@ -8,6 +8,7 @@ import shlex
 
 from src.log import logger
 from src.utils import assemble_base_ssh_cmd
+from src.security.encryption_mode import EncryptionMode
 
 class MyPath:
     def __init__(self, sys_root: str, pth_root: str = "", sub_pth: str = "", ssh_info: Optional[dict] = None):
@@ -86,7 +87,7 @@ class MyPath:
 class DirectoryWrapper():
     """Represents a path inside a location"""
 
-    def __init__(self, sys_root: str, pth_dir: str, ssh_info: dict = None, sensitive : bool = False):
+    def __init__(self, sys_root: str, pth_dir: str, ssh_info: dict = None, sensitive : bool = False, encryption_mode : EncryptionMode = EncryptionMode.FILE):
         """
         Initialize a directory wrapper from a root path.
         Validates the root path and prepares for processing subdirectories.
@@ -103,6 +104,7 @@ class DirectoryWrapper():
         self.sensitive_folders: list[MyPath] = []
         self.exclude_folders: list[MyPath] = []
         self.is_sensitive: bool = sensitive
+        self.encryption_mode = encryption_mode
 
     
     @staticmethod

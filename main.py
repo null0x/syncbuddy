@@ -11,7 +11,7 @@ Date:     2025-06-07
 Version:  1.0
 """
 
-from src.sync import sync_locations
+from src.sync.sync import sync_locations
 from src.utils import init, clean_up
 
 

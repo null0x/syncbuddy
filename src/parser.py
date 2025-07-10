@@ -50,7 +50,7 @@ def get_sync_arguments():
 	args = parser.parse_args()
 
 	dry_run = args.dry
-	remove_remote_files = args.remove 
+	remove_remote_files = False #args.remove 
 
 	src_location, src_path = args.src.split(":") if ":" in args.src else (args.src, None)
 	dst_location, dst_path = args.dst.split(":") if ":" in args.dst else (args.dst, None)
@@ -159,8 +159,5 @@ def check_pick_mode(config, args):
 	# Overwrite source dirs from configuration
 	if new_src_dirs is not None:
 		config["locations"][args["src_location"]]["dirs"] = new_src_dirs
-
-
-			
-
+		
 	return config

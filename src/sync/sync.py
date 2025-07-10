@@ -1,11 +1,13 @@
 import subprocess
 
 from src.log import logger
-from src.security import encrypt_dir, decrypt_dir
+from src.security.encryption import encrypt_srcdir
+from src.security.decryption import decrypt_dir
+from src. security.encryption_mode import EncryptionMode
 from src.globals import Globals
 
-from src.sync_helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
-from src.sync_matching import match_locations, check_matching_locations
+from src.sync.helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
+from src.sync.matching import match_locations, check_matching_locations
 
 
 def sync_locations(config, args):
@@ -91,24 +93,28 @@ def execute_sync_jobs(config, args, sync_jobs):
 
 		# Encrypt source if required
 		if job.encrypt:		
-			src_path_str = encrypt_dir(config, job)	
+			src_path_str = encrypt_srcdir(config, job)	
 			if src_path_str is None:
 				num_errors += 1
 				continue
-
+		
 		# Append a trailing slash to the source path to copy only the directory's contents (not the directory itself).
 		# Do this only when the directory is unencrypted, because for encrypted directories,
 		# the ciphertext is a single file and adding a slash would cause incorrect transfer.
 		raw_dst_path = str(job.dst)
+
 		if not raw_dst_path.endswith("/"):
 			raw_dst_path += "/"
 
 		raw_src_path = str(job.src) if not job.encrypt else str(src_path_str)
-		if not src_path_str.suffix:
+		
+		if (not job.encrypt) or (job.encryption_mode != EncryptionMode.FILE and not src_path_str.suffix):
 			raw_src_path += "/"
+	
 
 		rsync_cmd += [raw_src_path, raw_dst_path]
-
+		logger.debug(rsync_cmd)
+		
 		try:
 			subprocess.run(rsync_cmd, check=True)
 		except subprocess.CalledProcessError:

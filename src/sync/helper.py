@@ -1,9 +1,9 @@
 from src.log import logger
 from src.path_wrapper import DirectoryWrapper, MyPath
-from src.sync_job import SyncJob
-from src.security import check_security
+from src.sync.job import SyncJob
+from src.security.helper import check_security
+from src.security.encryption_mode import EncryptionMode
 from src.utils import ask_yes_no
-from src.globals import Globals
 from pathlib import Path
 
 def preprocess_location(location):
@@ -29,8 +29,15 @@ def preprocess_location(location):
 	# Parse directories
 	for loc_to_sync in location.get("dirs", []):
 		sensitive = loc_to_sync.get("sensitive", False)
+		raw_path = loc_to_sync.get("path")
 
-		loc = DirectoryWrapper(root_dir, loc_to_sync["path"], ssh_info, sensitive)
+		try:
+			encryption_mode = EncryptionMode(loc_to_sync.get("encryption_mode", "file"))
+		except ValueError:
+			raise ValueError(f"Invalid encryption mode: {loc_to_sync.get('encryption_mode')}")
+		
+
+		loc = DirectoryWrapper(root_dir, raw_path, ssh_info, sensitive, encryption_mode)
 
 		# Check if source directory exist
 		dir_path = loc.get_dir_path()
@@ -103,7 +110,8 @@ def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
 			encrypt=encrypt,
 			decrypt=decrypt,
 			excludes=src_dir.get_exclude_dirs(sens_dirs_exist),
-			ssh=dst_ssh or src_ssh
+			ssh=dst_ssh or src_ssh,
+			encryption_mode=src_dir.encryption_mode
 		))
 
 		# Create an individual sync job for each sensitive folder (always encrypted)
@@ -121,7 +129,8 @@ def build_sync_jobs(src_location: dict, dst_location: dict) -> list[dict]:
 					encrypt=True,
 					decrypt=False,
 					excludes=[],
-					ssh=dst_ssh
+					ssh=dst_ssh,
+					encryption_mode=src_dir.encryption_mode
 				))
 
 	logger.debug("Created %d synchronization job(s).", len(sync_jobs))
@@ -152,7 +161,7 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	# Add deletion of remote files
 	if args.get("remove_remote_files", False):
 		rsync_command.append("--delete")
-		rsync_command.extend(["--exclude", "*"+Globals.CIPHERTEXT_ENDING]) # Prevent deletion of ciphertexts
+		#rsync_command.extend(["--exclude", "*"+Globals.CIPHERTEXT_ENDING]) # Prevent deletion of ciphertexts
 
 
 	# Use SSH if port is specified

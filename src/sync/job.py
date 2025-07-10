@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
+
 from src.path_wrapper import MyPath
+from src.security.encryption_mode import EncryptionMode
 
 @dataclass
 class SyncJob:
@@ -30,6 +32,7 @@ class SyncJob:
     decrypt: bool
     excludes: List[str]
     ssh: Optional[dict] = None
+    encryption_mode : EncryptionMode = EncryptionMode.FILE
 
     def is_remote(self) -> bool:
         return self.ssh is not None
