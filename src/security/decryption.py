@@ -39,8 +39,7 @@ def decrypt_dir(ciphertext: Path, remove_top_level_dir=False) -> bool:
     except subprocess.CalledProcessError:
         logger.error(f"Failed to decrypt \"{ciphertext}\".")
         return False
-
-
+    
     # If the output is a tar archive, extract it
     if out_file.suffix == Globals.ARCHIVE_ENDING:
         tar_cmd = [

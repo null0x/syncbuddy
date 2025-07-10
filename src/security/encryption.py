@@ -115,7 +115,7 @@ def _encrypt_files_individually(config, input_dir, output_dir):
     return output_dir
 
 
-def encrypt_srcdir(config, job):
+def encrypt_srcdir(config, job) -> Path:
     """
     Encrypts the source directory of the provided job in one of two modes:
     - DIRECTORY: Archive the whole directory and encrypt the archive.

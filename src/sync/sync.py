@@ -89,50 +89,46 @@ def execute_sync_jobs(config, args, sync_jobs):
 	num_errors = 0
 	for job in sync_jobs:
 		rsync_cmd = assemble_rsync_cmd(args, job)
-		src_path_str = job.src.get_abs_path()
+		strip_outer_dir = False
 
 		# Create destination path if necessary (rsync only creates the parent)
 		if not job.dst.create_dir():
 			logger.error(f"Failed to create destination directory \"{str(job.dst)}\"")
 			continue
 			
-
 		# Encrypt source if required
 		if job.encrypt:		
-			src_path_str = encrypt_srcdir(config, job)	
-			if src_path_str is None:
+			src_path = encrypt_srcdir(config, job)	
+			if src_path is None:
 				num_errors += 1
 				continue
-		
-		# Append a trailing slash to the source path to copy only the directory's contents (not the directory itself).
-		# Do this only when the directory is unencrypted, because for encrypted directories,
-		# the ciphertext is a single file and adding a slash would cause incorrect transfer.
+		else:
+			src_path = job.src
+
 		raw_dst_path = str(job.dst)
 
+		# Copy source into the destination directory
 		if not raw_dst_path.endswith("/"):
 			raw_dst_path += "/"
 
-		raw_src_path = str(job.src) if not job.encrypt else str(src_path_str)
+
+		# Append a trailing slash to the source path to copy only the directory's contents (not the directory itself).
+		# Do this only when the directory is unencrypted, because for encrypted directories,
+		# the ciphertext is a single file and adding a slash would cause incorrect transfer.
+		raw_src_path = str(src_path)
+		if not src_path.suffix:
+
+			# Case: Unencrypted transfer — include directory contents, not the directory itself
+			# Case: Encrypting contents of a sensitive directory in 'file' mode — include directory contents
+			if not job.encrypt or job.encryption_mode == EncryptionMode.FILE:
+				raw_src_path += "/"
+
+			# Case: Decrypting a previously encrypted directory — remove the outer directory level
+			if job.decrypt:
+				strip_outer_dir = True
+
 		
-		#if (not job.encrypt) or (job.encryption_mode != EncryptionMode.FILE and not src_path_str.suffix):
-		#	raw_src_path += "/"
-
-		strip_outer_dir = config["pickmode"]
-
-		if not job.encrypt:
-			raw_src_path += "/"
-
-		# Fall: Das ganze Verzeichnis is sensitive
-		if job.encrypt and job.encryption_mode == EncryptionMode.FILE:
-			raw_src_path += "/"
-
-		# Fall: Das ganze Verzeichnis ist sensitive und daher verschlüsselt
-		if job.decrypt:
-			raw_src_path += "/"
-			strip_outer_dir = True
-
 		rsync_cmd += [raw_src_path, raw_dst_path]
-		print(rsync_cmd)
 		logger.debug(rsync_cmd)
 		
 		try:

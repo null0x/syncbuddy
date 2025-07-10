@@ -29,7 +29,10 @@ class MyPath:
 
     def get_abs_path(self) -> Path:
         return self.abs_path
-          
+            
+    @property
+    def suffix(self) -> str:
+        return self.abs_path.suffix
         
     def has_suffix(self, suffix: str) -> bool:
         return self.abs_path.suffix.lower() == suffix.lower()
