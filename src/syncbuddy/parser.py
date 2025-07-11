@@ -2,8 +2,8 @@ import argparse
 import yaml
 import os
 
-from src.log import logger
-from src.globals import Globals
+from syncbuddy.log import logger
+from syncbuddy.globals import Globals
 
 def parse_config(path_to_config):
 	"""

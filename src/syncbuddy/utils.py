@@ -1,9 +1,9 @@
 import os
 import shutil
 
-from src.log import logger
-from src.globals import Globals
-from src. parser import parse_config, get_sync_arguments, check_pick_mode
+from syncbuddy.log import logger
+from syncbuddy.globals import Globals
+from syncbuddy. parser import parse_config, get_sync_arguments, check_pick_mode
 
 def check_system_dependencies():
     """

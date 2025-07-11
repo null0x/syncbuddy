@@ -1,8 +1,8 @@
 import subprocess
 
 from pathlib import Path
-from src.log import logger
-from src.globals import Globals
+from syncbuddy.log import logger
+from syncbuddy.globals import Globals
 
 def decrypt_dir(ciphertext: Path, remove_top_level_dir=False) -> bool:
     """

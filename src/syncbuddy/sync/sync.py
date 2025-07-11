@@ -1,13 +1,13 @@
 import subprocess
 
-from src.log import logger
-from src.security.encryption import encrypt_srcdir
-from src.security.decryption import decrypt_dir
-from src.security.encryption_mode import EncryptionMode
-from src.globals import Globals
-from src.sync.job import SyncJob
-from src.sync.helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
-from src.sync.matching import match_locations, check_matching_locations
+from syncbuddy.log import logger
+from syncbuddy.security.encryption import encrypt_srcdir
+from syncbuddy.security.decryption import decrypt_dir
+from syncbuddy.security.encryption_mode import EncryptionMode
+from syncbuddy.globals import Globals
+from syncbuddy.sync.job import SyncJob
+from syncbuddy.sync.helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
+from syncbuddy.sync.matching import match_locations, check_matching_locations
 
 
 def sync_locations(config, args):

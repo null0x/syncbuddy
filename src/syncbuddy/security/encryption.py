@@ -2,9 +2,9 @@ import subprocess
 import os
 
 from pathlib import Path
-from src.globals import Globals
-from src.log import logger
-from src.security.encryption_mode import EncryptionMode
+from syncbuddy.globals import Globals
+from syncbuddy.log import logger
+from syncbuddy.security.encryption_mode import EncryptionMode
 
 def encrypt_file(config, file_to_encrypt : Path, out_file : Path):
 

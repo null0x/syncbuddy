@@ -1,10 +1,10 @@
-from src.log import logger
-from src.path_wrapper import DirectoryWrapper, MyPath
-from src.sync.job import SyncJob
-from src.globals import Globals
-from src.security.helper import check_security
-from src.security.encryption_mode import EncryptionMode
-from src.utils import ask_yes_no
+from syncbuddy.log import logger
+from syncbuddy.path_wrapper import DirectoryWrapper, MyPath
+from syncbuddy.sync.job import SyncJob
+from syncbuddy.globals import Globals
+from syncbuddy.security.helper import check_security
+from syncbuddy.security.encryption_mode import EncryptionMode
+from syncbuddy.utils import ask_yes_no
 from pathlib import Path
 
 def preprocess_location(location):

@@ -6,9 +6,9 @@ import glob
 import subprocess
 import shlex
 
-from src.log import logger
-from src.utils import assemble_base_ssh_cmd
-from src.security.encryption_mode import EncryptionMode
+from syncbuddy.log import logger
+from syncbuddy.utils import assemble_base_ssh_cmd
+from syncbuddy.security.encryption_mode import EncryptionMode
 
 class MyPath:
     def __init__(self, sys_root: str, pth_root: str = "", sub_pth: str = "", ssh_info: Optional[dict] = None):

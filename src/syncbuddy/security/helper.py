@@ -1,6 +1,6 @@
-from src.globals import Globals
-from src.log import logger
-from src.path_wrapper import DirectoryWrapper
+from syncbuddy.globals import Globals
+from syncbuddy.log import logger
+from syncbuddy.path_wrapper import DirectoryWrapper
 
 
 def check_security(src : DirectoryWrapper, dst_trusted : bool) -> tuple[bool, bool]:

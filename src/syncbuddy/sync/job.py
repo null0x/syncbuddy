@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import List, Optional
 
-from src.path_wrapper import MyPath
-from src.security.encryption_mode import EncryptionMode
+from syncbuddy.path_wrapper import MyPath
+from syncbuddy.security.encryption_mode import EncryptionMode
 
 @dataclass
 class SyncJob:

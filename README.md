@@ -8,9 +8,21 @@ Configuration is handled via a separate file that defines *locations*. A locatio
 
 If data is marked as *sensitive* and the destination is *untrusted*, SyncBuddy automatically encrypts it. Similarly, it decrypts data behind the scenes when transferring to trusted locations.
 
-SyncBuddy supports a **pick mode** that enables quick transmission of a specific directory between two locations without modifying the configuration file. This mode is especially useful when the general synchronization setup should remain unchanged, but you need immediate access to a particular set of data. 
+SyncBuddy supports a **pick mode** that enables quick transmission of a specific file or directory between two locations without modifying the configuration file. This mode is especially useful when the general synchronization setup should remain unchanged, but you need immediate access to a particular set of data. 
 
 Under the hood, SyncBuddy uses `rsync` for efficient file synchronization, `gpg` for encryption and decryption, and `ssh` for secure remote access. Instead of manually building complex command-line calls, SyncBuddy provides a simple, robust interface for seamless data sync.
+
+
+## Install
+
+To install SyncBuddy for development, navigate to the project's root directory and run:
+
+```
+pip install -e .
+```
+
+This installs the project in editable mode, so you can run it and make changes without reinstalling. For a regular (non-editable) install, simply omit the `-e` flag.
+
 
 
 ## Usage
@@ -18,7 +30,7 @@ Under the hood, SyncBuddy uses `rsync` for efficient file synchronization, `gpg`
 The usage of SyncBuddy is easy and straightforward:
 
 ```python
-python3 main.py --src=<source-location> --dst=<destination-location> [--dry] [--remove] [--config] [--match]
+syncbuddy --src=<source-location> --dst=<destination-location> [--dry] [--remove] [--config] [--match] [--yes]
 ```
 
 Before running SyncBuddy, the user must define both `source-location` and `destination-location` in the configuration file (see below). The optional `dry` parameter indicates a test run which is helpful if you are unsure of how `rsync` will move data. The `remove` argument is also passed to `rsync` indicating to delete those files at the destination location that no longer exist at the source location. The `config` parameter enables the user to specify a configuration file with a custom name.
@@ -36,22 +48,22 @@ SyncBuddy provides two methods for assigning destination directories to source d
 
 ### Pick Mode
 
-Pick mode enables quick transmission of a specific directory, either to the directory provided in the configuration or to another user-defined directory. To use Pick Mode, append a *relative path* to the source or destination location using a colon (`:`). The path must be*relative to the location’s root directory as defined in the configuration.
+Pick mode enables quick transmission of a specific file or directory, either to the directory provided in the configuration or to another user-defined directory. To use Pick Mode, append a *relative path* to the source or destination location using a colon (`:`). The path must be *relative* to the location’s root directory as defined in the configuration.
 
 
 The following command transfers the directory `this/is_a/path` from the `<source-location>` to `copy/data/here` inside the `<destination-location>`:
 
 
 ```python
-python3 main.py --src=<source-location>:this/is_a/path --dst=<destination-location>:copy/data/here [--encrypted]
+syncbuddy --src=<source-location>:this/is_a/path --dst=<destination-location>:copy/data/here [--encrypt]
 ```
 
 If the `--encrypt` flag is provided, SyncBuddy will encrypt the source directory before transmission. 
 
-If the source path ends with `.syncbuddy`, SyncBuddy assumes the data is already encrypted. If the destination location is marked as trusted in the configuration, SyncBuddy will automatically decrypt the data:
+If the source path ends with `.crypt`, SyncBuddy assumes the data is encrypted. If the destination location is marked as trusted in the configuration, SyncBuddy will automatically decrypt the data:
 
 ```python
-python3 main.py --src=<source-location>:this/is_an/encrypted/directory.syncbuddy --dst=<destination-location>:copy/data/here 
+syncbuddy --src=<source-location>:this/is_an/encrypted/directory.syncbuddy --dst=<destination-location>:copy/data/here 
 ```
 
 

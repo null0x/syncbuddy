@@ -1,5 +1,5 @@
-from src.log import logger
-from src.path_wrapper import DirectoryWrapper
+from syncbuddy.log import logger
+from syncbuddy.path_wrapper import DirectoryWrapper
 
 def match_locations(src, dst):
 
