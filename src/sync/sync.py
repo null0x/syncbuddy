@@ -3,9 +3,9 @@ import subprocess
 from src.log import logger
 from src.security.encryption import encrypt_srcdir
 from src.security.decryption import decrypt_dir
-from src. security.encryption_mode import EncryptionMode
+from src.security.encryption_mode import EncryptionMode
 from src.globals import Globals
-
+from src.sync.job import SyncJob
 from src.sync.helper import preprocess_location, build_sync_jobs, assemble_rsync_cmd, select_sync_jobs
 from src.sync.matching import match_locations, check_matching_locations
 
@@ -69,7 +69,7 @@ def sync_locations(config, args):
 
 
 
-def execute_sync_jobs(config, args, sync_jobs):
+def execute_sync_jobs(config, args, sync_jobs : list[SyncJob]) -> bool:
 	"""
 	Execute a list of synchronization jobs using rsync, with optional encryption and decryption.
 
@@ -88,35 +88,29 @@ def execute_sync_jobs(config, args, sync_jobs):
 	"""
 	num_errors = 0
 	for job in sync_jobs:
-		rsync_cmd = assemble_rsync_cmd(args, job)
-		strip_outer_dir = False
 
 		# Create destination path if necessary (rsync only creates the parent)
 		if not job.dst.create_dir():
 			logger.error(f"Failed to create destination directory \"{str(job.dst)}\"")
 			continue
-			
-		# Encrypt source if required
-		if job.encrypt:		
-			src_path = encrypt_srcdir(config, job)	
-			if src_path is None:
-				num_errors += 1
-				continue
-		else:
-			src_path = job.src
 
-		raw_dst_path = str(job.dst)
+		# Encrypt source if required
+		src_path = encrypt_srcdir(config, job) if job.encrypt else job.src
+		if src_path is None:
+			num_errors += 1
+			continue
 
 		# Copy source into the destination directory
+		raw_dst_path = str(job.dst)
 		if not raw_dst_path.endswith("/"):
 			raw_dst_path += "/"
-
 
 		# Append a trailing slash to the source path to copy only the directory's contents (not the directory itself).
 		# Do this only when the directory is unencrypted, because for encrypted directories,
 		# the ciphertext is a single file and adding a slash would cause incorrect transfer.
 		raw_src_path = str(src_path)
-		if not src_path.suffix:
+		strip_outer_dir = False
+		if not src_path.suffix: # It's a directory
 
 			# Case: Unencrypted transfer — include directory contents, not the directory itself
 			# Case: Encrypting contents of a sensitive directory in 'file' mode — include directory contents
@@ -127,7 +121,8 @@ def execute_sync_jobs(config, args, sync_jobs):
 			if job.decrypt:
 				strip_outer_dir = True
 
-		
+
+		rsync_cmd = assemble_rsync_cmd(args, job)		
 		rsync_cmd += [raw_src_path, raw_dst_path]
 		logger.debug(rsync_cmd)
 		
@@ -138,7 +133,7 @@ def execute_sync_jobs(config, args, sync_jobs):
 			num_errors+=1
 			continue
 
-		# Check if there are any encrypted directories
+		# Post-processing: decryption
 		dst_path = job.dst.get_abs_path()
 		gpg_files = list(dst_path.rglob(f"*{Globals.CIPHERTEXT_ENDING}"))
 

@@ -84,7 +84,7 @@ def _encrypt_as_archive(config, input_dir, excludes, output_dir):
 
     return ciphertext_path
 
-def _encrypt_files_individually(config, input_dir, output_dir):
+def _encrypt_files_individually(config, input_dir : Path, output_dir : Path):
     """
     Recursively encrypts each file in the input directory individually.
 
@@ -103,6 +103,14 @@ def _encrypt_files_individually(config, input_dir, output_dir):
     """
     logger.debug("Encryption in 'file' mode")
 
+    # Check if input is a single file (possible in pick mode)
+    if input_dir.is_file():
+        input_file_path = input_dir
+        output_file_path = (output_dir / input_dir.name).with_suffix(input_dir.suffix + Globals.CIPHERTEXT_ENDING)
+        encrypt_file(config, input_file_path, output_file_path)
+        return output_file_path
+    
+    # Otherwise, walk through the entire directory
     for root, _, files in os.walk(input_dir):
         for file in files:
             input_file_path = Path(root) / file
@@ -110,7 +118,6 @@ def _encrypt_files_individually(config, input_dir, output_dir):
             output_file_path = (output_dir / relative_path).with_suffix(relative_path.suffix + Globals.CIPHERTEXT_ENDING)
             output_file_path.parent.mkdir(parents=True, exist_ok=True)
             encrypt_file(config, input_file_path, output_file_path)
-
 
     return output_dir
 
@@ -130,9 +137,9 @@ def encrypt_srcdir(config, job) -> Path:
     logger.debug(f"Encrypting directory {dir_to_encrypt}")
 
     # Abort if directory does not exist
-    if not dir_to_encrypt.is_dir():
-        logger.error(f"Directory to encrypt does not exist: {dir_to_encrypt}")
-        return None
+    #if not dir_to_encrypt.is_dir():
+    #    logger.error(f"Directory to encrypt does not exist: {dir_to_encrypt}")
+    #    return None
     
     # Get directory for temporary files
     tmp_dir = config.get("gpg", {}).get("tmp_dir")
@@ -142,10 +149,10 @@ def encrypt_srcdir(config, job) -> Path:
     
     # Specify output directory
     input_dir = dir_to_encrypt.get_abs_path()
-    relative_dir = Path(*input_dir.parts[1:])
+    tmp_input_dir = input_dir.parent  if input_dir.is_file() else input_dir
+    relative_dir = Path(*tmp_input_dir.parts[1:])
     output_dir = Path(tmp_dir) / relative_dir
     output_dir.mkdir(parents=True, exist_ok=True)
-
 
     # Encrypt directory depending on the encryption mode
     if enc_mode == EncryptionMode.DIRECTORY:

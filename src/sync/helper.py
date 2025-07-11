@@ -1,6 +1,7 @@
 from src.log import logger
 from src.path_wrapper import DirectoryWrapper, MyPath
 from src.sync.job import SyncJob
+from src.globals import Globals
 from src.security.helper import check_security
 from src.security.encryption_mode import EncryptionMode
 from src.utils import ask_yes_no
@@ -170,10 +171,16 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	if args.get("dry_run", False):
 		rsync_command.append("--dry-run")
 
-	# Add deletion of remote files
+	# Enable deletion of remote files not present locally
 	if args.get("remove_remote_files", False):
 		rsync_command.append("--delete")
-		#rsync_command.extend(["--exclude", "*"+Globals.CIPHERTEXT_ENDING]) # Prevent deletion of ciphertexts
+
+		# Caution: Without exclusions, rsync may delete encrypted files at the destination 
+		# if their plaintext equivalents exist only locally.
+		# To prevent this, exclude ciphertext files from deletion if the job is not encrypted.
+		if not sync_job.encrypt:
+			rsync_command.extend(["--exclude", "*" + Globals.CIPHERTEXT_ENDING])
+
 
 
 	# Use SSH if port is specified
@@ -184,7 +191,7 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	return rsync_command
 
 
-def select_sync_jobs(config: dict, jobs: list) -> list:
+def select_sync_jobs(args: dict, jobs: list) -> list:
 	"""
 	Display planned synchronization jobs and key settings, then prompt the user for selection.
 
@@ -264,10 +271,10 @@ def select_sync_jobs(config: dict, jobs: list) -> list:
 		print(f"  {i + 1}. {job.describe()}")
 
 	print("\nSettings:")
-	print(f"  • Dry Run:                         {'Yes' if config.get('dry_run') else 'No'}")
-	print(f"  • Remove files at destination:     {'Yes' if config.get('remove_remote_files') else 'No'}")
+	print(f"  • Dry Run:                         {'Yes' if args.get('dry_run') else 'No'}")
+	print(f"  • Remove files at destination:     {'Yes' if args.get('remove_remote_files') else 'No'}")
 
-	if not ask_yes_no("\nDo you want to continue? (y/n): "):
+	if not args["auto_answer"] and not ask_yes_no("\nDo you want to continue? (y/n): "):
 		return []
 
 	return [job for _, job in selected]
