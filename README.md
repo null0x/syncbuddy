@@ -23,7 +23,11 @@ pip install -e .
 
 This installs the project in editable mode, so you can run it and make changes without reinstalling. For a regular (non-editable) install, simply omit the `-e` flag.
 
+Alternatively, you can use our install.sh script to install SyncBuddy globally on your system via pipx, which isolates the app and makes the CLI command available everywhere:
 
+```
+./install.sh
+```
 
 ## Usage
 
