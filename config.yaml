@@ -1,36 +1,71 @@
 locations:
-  sample-source:
-    name: sample-source
-    root_dir: /home/user/personal_files
+  work-laptop:
+    name: lenovo
+    root_dir: /home/dominik/
     trusted: true
     dirs:
-      - path: pictures/vacation_2025
-        sensitive: false
+      - path: Uni
         exclude_folders:
-          - AllPictures.zip
-          - Videos/Large/Stuff
-      - path: documents/tax_2024
-        sensitive: true
-      - path: documents/letters
-        sensitive: false
+           - Code/ASOA/Configuration/other/database_backup_architecture_tool/backups/db/
+           - Projekte/UNICARagil/Dokumente/00_CONFLUENCE_EXPORT.zip
+           - "*/.git/"
+      - path: Documents/Bewerbungsunterlagen
         sensitive_folders:
-          - family/my_wife
+         - Zeugnisse
+         - Arbeitszeugnis
+      - path: Ectonix
+        sensitive_folders:
+        - Nextcloud/Vertraulich
+      - path: Code
+      - path: Desktop
+     
+  external-hard-drive:
+    name: toshiba
+    root_dir: /media/veracrypt1
+    trusted: true
+    dirs:
+       - path: Arbeit/Uni
+       - path: Arbeit/Bewerbungsunterlagen
+         sensitive_folders:
+         - Zeugnisse
+         - Arbeitszeugnis
+       - path: Arbeit/Ectonix
+       - path: Arbeit/Code
+       - path: Arbeit/Desktop
+       - path: Privat
+         sensitive_folders:
+         - Dokumente/Freiberuflich
+         - Dokumente/Gesundheit
+         - Dokumente/Lohn
+         - Dokumente/Steuer
+         - Dokumente/Finanzen
 
-  sample-destination:
-    name: sample-remote-destination
-    root_dir: /home/remote-user
+  remote-storagebox:
+    name: storagebox
+    root_dir: /home
     trusted: false
     dirs:
-      - path: pictures/vacation/2025
-        sensitive: false
-      - path: documents/tax/2024
-        sensitive: true
-      - path: documents/my_letters
+      - path: Arbeit/Uni
+      - path: Arbeit/Bewerbungsunterlagen
+        sensitive_folders:
+        - Zeugnisse
+        - Arbeitszeugnis
+      - path: Arbeit/Ectonix
+      - path: Arbeit/Code
+      - path: Arbeit/Desktop
+      - path: Privat
+        sensitive_folders:
+        - Dokumente/Freiberuflich
+        - Dokumente/Gesundheit
+        - Dokumente/Lohn
+        - Dokumente/Steuer
+        - Dokumente/Finanzen/
     ssh:
-      username: remote-user
-      hostname: remote-user.my-remote-storage.com
-      port: 23
+     username: u425201
+     hostname: u425201.your-storagebox.de
+     port: 23
 
 gpg:
-  recipient: my_email@address.com
-  tmp_dir: /tmp/syncbuddy
+  recipient: dominik.puellen@uni-passau.de
+  tmp_dir: /tmp/synbuddy
+

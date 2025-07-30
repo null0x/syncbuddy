@@ -31,13 +31,15 @@ Alternatively, you can use our install.sh script to install SyncBuddy globally o
 
 ## Usage
 
-The usage of SyncBuddy is easy and straightforward:
+The usage of **SyncBuddy** is easy and straightforward:
 
 ```python
-syncbuddy --src=<source-location> --dst=<destination-location> [--dry] [--remove] [--config] [--match] [--yes]
+syncbuddy [--src=<source-location>] [--dst=<destination-location>] [--dry] [--remove] [--config] [--match] [--yes]
 ```
 
-Before running SyncBuddy, the user must define both `source-location` and `destination-location` in the configuration file (see below). The optional `dry` parameter indicates a test run which is helpful if you are unsure of how `rsync` will move data. The `remove` argument is also passed to `rsync` indicating to delete those files at the destination location that no longer exist at the source location. The `config` parameter enables the user to specify a configuration file with a custom name.
+Before running SyncBuddy, you must define one or more locations in your configuration file. These locations can be used as both source and destination targets. If `--src` and `--dst` are not provided, SyncBuddy will prompt you to select them interactively from your configured locations.
+
+The optional `dry` parameter indicates a test run which is helpful if you are unsure of how `rsync` will move data. The `remove` argument is also passed to `rsync` indicating to delete those files at the destination location that no longer exist at the source location. The `config` parameter enables the user to specify a configuration file with a custom name.
 
 
 ### Directory Matching

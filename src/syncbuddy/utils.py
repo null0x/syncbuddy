@@ -24,6 +24,73 @@ def check_system_dependencies():
             return False
     return True
 
+		#"src_location" : src_location,
+		#"dst_location" : dst_location,
+		#"src_path": src_path,
+		#"dst_path": dst_path,
+
+
+def choose_option(prompt, options):
+    """
+    Prompts the user to choose from a list of options.
+    Returns the selected key.
+    """
+    print(f"\n{prompt}")
+    for i, key in enumerate(options, 1):
+        print(f"  {i}. {key}")
+
+    while True:
+        choice = input("\nEnter the number of your choice: ").strip()
+        if choice.isdigit():
+            idx = int(choice) - 1
+            if 0 <= idx < len(options):
+                return options[idx]
+        print("Invalid choice. Please try again.")
+
+def get_locations(config, args):
+		
+	# Check if the user provided src and dst locations through cli
+	if args["src"] != None and args["dst"] != None:
+		src_location, src_path = args["src"].split(":") if ":" in args["src"] else (args["src"], None)
+		dst_location, dst_path = args["dst"].split(":") if ":" in args["dst"] else (args["dst"], None)
+
+		if src_location == dst_location:
+			print("Source and destination location must not be equal.")
+			return False
+
+		args["src_location"] = src_location
+		args["dst_location"] = dst_location
+		args["src_path"] = src_path
+		args["dst_path"] = dst_path
+
+	
+	else:
+
+		# Alternativly, present the user the available locations and let him select
+		location_keys = list(config["locations"].keys())
+
+		if len(location_keys) < 2:
+			print("You need at least two locations to choose from.")
+			return None, None
+		
+
+		src_location = choose_option("Select your source location:", location_keys)
+		destination_keys = [k for k in location_keys if k != src_location]
+		destination = choose_option("Select your destination location:", destination_keys)
+
+		args["src_location"] = src_location
+		args["dst_location"] = destination
+
+	return True
+
+
+
+
+		
+	
+
+
+
 
 def init():
 	"""
@@ -47,6 +114,10 @@ def init():
 	# Parse configuration
 	config = parse_config(args["config_file"])
 	if config is None:
+		return None, None
+	
+	# Ask user to select locations if not provided
+	if not get_locations(config, args):
 		return None, None
 	
 	# Some consistency checks

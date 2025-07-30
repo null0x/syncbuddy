@@ -31,6 +31,38 @@ def parse_config(path_to_config):
 	
 	return config
 
+
+def find_config_file(user_provided_file):
+	"""
+	Search for a configuration file.
+
+	If `user_provided_file` is given and exists, return it.
+	Otherwise, search for the default config file in predefined directories.
+
+	Args:
+		user_provided_file (str or None): Path to a user-specified config file.
+
+	Returns:
+		str or None: Full path to the found config file, or None if not found.
+	"""
+
+	if user_provided_file:
+		expanded_path = os.path.expanduser(user_provided_file)
+		if os.path.isfile(expanded_path):
+			return expanded_path
+		else:
+			print(f'Configuration file "{user_provided_file}" not found.')
+			return None
+
+	# Look for configuration file in default directories
+	for directory in Globals.DEFAULT_CONFIG_DIRS:
+		potential_path = os.path.expanduser(os.path.join(directory, Globals.DEFAULT_CONFIG_FILE))
+		if os.path.isfile(potential_path):
+			return potential_path
+
+	print(f"No configuration file found.")
+	return None
+
 def get_sync_arguments():
 	"""
 	Parses and validates command-line arguments for SyncBuddy.
@@ -41,8 +73,8 @@ def get_sync_arguments():
 	"""
 	parser = argparse.ArgumentParser(description="Synchronizes a source location with a destination location.")
 	parser.add_argument("--config", type=str, help="Path to the configuration YAML file")
-	parser.add_argument("--src", required=True, help="Source location (e.g., local")
-	parser.add_argument("--dst", required=True, help="Destination location (e.g., usb")
+	parser.add_argument("--src", help="Source location (e.g., local")
+	parser.add_argument("--dst", help="Destination location (e.g., usb")
 	parser.add_argument("--dry", action="store_true",  help="Make a dry (test) run.")
 	parser.add_argument("--remove", action="store_const", const=True, default=False, help="Remove files from destination that do not exist on source.")
 	parser.add_argument("--encrypt", action="store_true", default=False, help="Encrypt source if you are in pick mode.")
@@ -53,25 +85,16 @@ def get_sync_arguments():
 	dry_run = args.dry
 	remove_remote_files = args.remove 
 	auto_answer = args.yes
-
-	src_location, src_path = args.src.split(":") if ":" in args.src else (args.src, None)
-	dst_location, dst_path = args.dst.split(":") if ":" in args.dst else (args.dst, None)
-
-	if dst_path == None and args.encrypt:
-		print("Ignoring --encrypt option as you did not pick a destination.")
-
-	if src_location == dst_location:
-		print("Source and destination location must not be equal.")
+	
+	config_file = find_config_file(args.config)
+	if config_file == None:
 		return None
 	
-	# Check if user provided a configuration file
-	config_file = args.config if args.config is not None else Globals.DEFAULT_CONFIG_FILE
-
+	logger.debug("Configuration file: {config_file}")
+	
 	return {
-		"src_location" : src_location,
-		"dst_location" : dst_location,
-		"src_path": src_path,
-		"dst_path": dst_path,
+		"src" : args.src,
+		"dst" : args.dst,
 		"dry_run" : dry_run, 
 		"manual_matching" : args.match,
 		"encrypt_src" : args.encrypt,

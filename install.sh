@@ -1,4 +1,8 @@
 #!/bin/bash
+
+CONFIG_FILE="config.yaml"
+DEST_DIR="$HOME/.config/syncbuddy"
+
 set -e
 
 echo "Checking for pipx..."
@@ -30,3 +34,12 @@ pipx install "$WHEEL_FILE"
 
 echo "syncbuddy installed successfully via pipx."
 echo "You can now run 'syncbuddy' from your terminal."
+
+# Installing configuration file if present
+if [ -f "$CONFIG_FILE" ]; then
+    mkdir -p "$DEST_DIR"
+    cp "$CONFIG_FILE" "$DEST_DIR/"
+    echo "Copied $CONFIG_FILE to $DEST_DIR/"
+else
+    echo "$CONFIG_FILE not found in current directory. Nothing to do."
+fi
