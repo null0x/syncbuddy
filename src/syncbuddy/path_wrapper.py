@@ -77,7 +77,7 @@ class MyPath:
             create_cmd = assemble_base_ssh_cmd(self.ssh_info)
             create_cmd += [f"mkdir -p {shlex.quote(str(self.abs_path))}"]
 
-            result = subprocess.run(create_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)			
+            result = subprocess.run(create_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)		
 
             if result.returncode == 0:
                 logger.debug(f"Successfully created remote directory '{self.abs_path}'.")

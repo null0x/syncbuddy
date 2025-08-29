@@ -185,6 +185,9 @@ def assemble_base_ssh_cmd(ssh_info):
 
 	# Assemble SSH base
 	ssh_cmd = ["ssh"]
+	if Globals.ENFORCE_IPV4:
+		ssh_cmd.append("-4")
+		
 	if port:
 		ssh_cmd += [f"-p{port}"]
 	ssh_cmd.append(f"{user}@{host}")

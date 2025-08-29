@@ -187,6 +187,8 @@ def assemble_rsync_cmd(args, sync_job: SyncJob) -> list[str]:
 	ssh_info = sync_job.ssh
 	if ssh_info and ssh_info.get("port"):
 		rsync_command.extend(["-e", f"ssh -p {ssh_info['port']}"])
+		if Globals.ENFORCE_IPV4:
+			rsync_command.append("-4")
 
 	return rsync_command
 

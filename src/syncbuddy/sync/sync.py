@@ -125,7 +125,7 @@ def execute_sync_jobs(config, args, sync_jobs : list[SyncJob]) -> bool:
 		rsync_cmd = assemble_rsync_cmd(args, job)		
 		rsync_cmd += [raw_src_path, raw_dst_path]
 		logger.debug(rsync_cmd)
-		
+
 		try:
 			subprocess.run(rsync_cmd, check=True)
 		except subprocess.CalledProcessError:
